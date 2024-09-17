@@ -24,6 +24,26 @@ pool.on('connect', () => {
   console.log('Connected to the employees_db database.');
 });
 
+// Add opening figlet banner
+figlet.text(
+  'EMPLOYEE TRACKER',
+  {
+    font: 'Big',
+    horizontalLayout: 'default',
+    verticalLayout: 'default',
+    width: 80,
+    whitespaceBreak: true,
+  },
+  function (err, data) {
+    if (err) {
+      console.log('Something went wrong...');
+      console.dir(err);
+      return;
+    }
+    console.log(data);
+  }
+);
+
 // Start the query prompt
 mainMenu();
 
