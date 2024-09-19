@@ -2,7 +2,8 @@
 const express = require('express');
 const inquirer = require('inquirer');
 const consoleTable = require('console.table');
-const { Pool } = require('pg'); // Import and require Pool from node-postgres
+const figlet = require('figlet');
+const { Pool } = require('pg');
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -14,40 +15,30 @@ app.use(express.json());
 // Connect to database
 const pool = new Pool({
   user: 'postgres',
-  password: 'admin', // Update password if needed
+  password: 'admin',
   host: 'localhost',
   database: 'employees_db',
 });
 
-// Notify when connected to the database
+//connected to the database
 pool.on('connect', () => {
   console.log('Connected to the employees_db database.');
 });
 
-// Add opening figlet banner
-figlet.text(
-  'EMPLOYEE TRACKER',
-  {
-    font: 'Big',
-    horizontalLayout: 'default',
-    verticalLayout: 'default',
-    width: 80,
-    whitespaceBreak: true,
-  },
-  function (err, data) {
-    if (err) {
-      console.log('Something went wrong...');
-      console.dir(err);
-      return;
-    }
-    console.log(data);
-  }
-);
-
-// Start the query prompt
-mainMenu();
-
-// Function to start Inquirer prompts for user options
+// Display opening banner with Figlet
+function displayBanner() {
+  console.log(
+    figlet.textSync('Employee Tracker', {
+      font: 'Big',
+      horizontalLayout: 'default',
+      verticalLayout: 'default',
+      width: 100,
+      whitespaceBreak: true,
+    })
+  );
+}
+displayBanner();
+// inquirer prompts user with options
 async function mainMenu() {
   try {
     const answer = await inquirer.prompt([
@@ -67,7 +58,6 @@ async function mainMenu() {
         ],
       },
     ]);
-
     switch (answer.action) {
       case 'View All Employees':
         await viewEmployees();
@@ -111,12 +101,12 @@ async function viewEmployees() {
                INNER JOIN role ON role.id = employee.role_id 
                INNER JOIN department ON department.id = role.department_id 
                ORDER BY employee.id;`;
-    const result = await pool.query(sql); // Await the query result
+    const result = await pool.query(sql);
     console.table(result.rows); // Display results in a table
   } catch (err) {
     console.error('Error fetching employees:', err);
   }
-  mainMenu(); // Only restart the menu after completing the action
+  mainMenu(); // Only restart when action is done
 }
 
 // Function to view all roles
@@ -125,24 +115,24 @@ async function viewRoles() {
     const sql = `SELECT role.id, role.title, role.salary, department.department_name AS department 
                FROM role 
                INNER JOIN department ON department.id = role.department_id;`;
-    const result = await pool.query(sql); // Await the query result
+    const result = await pool.query(sql);
     console.table(result.rows); // Display results in a table
   } catch (err) {
     console.error('Error fetching roles:', err);
   }
-  mainMenu(); // Only restart the menu after completing the action
+  mainMenu(); // Only restart when action is done
 }
 
 // Function to view all departments
 async function showDepartments() {
   try {
     const sql = `SELECT department.id, department.department_name AS Department FROM department;`;
-    const result = await pool.query(sql); // Await the query result
-    console.table(result.rows); // Display results in a table
+    const result = await pool.query(sql);
+    console.table(result.rows);
   } catch (err) {
     console.error('Error fetching departments:', err);
   }
-  mainMenu(); // Only restart the menu after completing the action
+  mainMenu(); // Only restart the menu when done
 }
 
 // Function to add an employee
@@ -179,13 +169,13 @@ async function addEmployee() {
         type: 'list',
         name: 'role',
         message: "What is the employee's role?",
-        choices: roleList, // Use the list of roles for the user to select from
+        choices: roleList, //select from list of roles
       },
       {
         type: 'list',
         name: 'manager',
         message: "Who is the employee's manager?",
-        choices: employeeList, // Use the list of employees for the user to select a manager
+        choices: [{ name: 'None', value: null }, ...employeeList],
       },
     ]);
 
@@ -213,7 +203,7 @@ async function addDepartment() {
 
     const sql = `INSERT INTO department (department_name) VALUES ('${answer.department}');`;
     await pool.query(sql);
-    console.log(`Added ${answer.department} to the database`);
+    console.log(`Added ${answer.department} to the database\n\n`);
   } catch (err) {
     console.error('Error adding department:', err);
   }
@@ -308,7 +298,8 @@ app.use((req, res) => {
   res.status(404).end();
 });
 
-// Listen to the PORT
+// Listen to the PORT and show the figlet banner before anything else
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}\n\n\n`);
+  mainMenu();
 });
